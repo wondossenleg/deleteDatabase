@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="42b13fab-17ce-47e6-a1bd-ed4fdf166a22" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="b47480b4-27b6-4057-95f2-a607ed7c888c" >
+		<db:my-sql-connection host="db4free.net" port="3306" user="batch14" password="Batch1420" database="customerinfo14" />
+	</db:config>
+	<flow name="delete_fFlow" doc:id="941dade3-b576-431a-912c-5d463e8c1745" >
+		<http:listener doc:name="Listener" doc:id="042a49e0-4a27-4150-bb18-920e8b290102" config-ref="HTTP_Listener_config" path="/delete"/>
+		<db:delete doc:id="e4d5c317-8f26-426d-beab-05eb25e041a8" config-ref="Database_Config">
+			<db:sql >delete from customerinfo14.customers;</db:sql>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="dc807f65-365f-4b6d-9dfb-0029451c20be" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "customers deleted successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7e0fc561-fc2a-4e80-b823-78a8cda969b6" type="DB:CONNECTIVITY">
+				<ee:transform doc:name="Transform Message" doc:id="a2b60a4c-723f-4ce2-b11c-8f7c04db321b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
